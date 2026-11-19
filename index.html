@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>测一测｜你的内耗程度</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='10' fill='%237FA0B4'/%3E%3Cpath d='M4 13c2.5-3 5-3 7.5 0s5 3 7.5 0' stroke='%23F6F6F2' stroke-width='2' fill='none'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="https://miaoda.feishu.cn/fonts/css2?family=Noto+Serif+SC:wght@500;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap">
+<style>
+  /* ============ 变量与基础 ============ */
+  :root{
+    --bg:#F5F5F1;
+    --paper:#FFFFFF;
+    --ink:#33383D;
+    --muted:#79838A;
+    --line:#E4E5DF;
+    --blue:#7FA0B4;
+    --blue-soft:#EAF0F3;
+    --pink:#D2A3AC;
+    --sage:#9CAD9C;
+    --sand:#C7B79E;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+    background:var(--bg);
+    color:var(--ink);
+    line-height:1.7;
+    min-height:100vh;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .wrap{
+    max-width:580px;margin:0 auto;
+    padding:28px 22px 56px;
+    min-height:100vh;
+    display:flex;flex-direction:column;
+    position:relative;z-index:1;
+  }
+  .view{display:flex;flex-direction:column;flex:1}
+  .hidden{display:none !important}
+
+  .btn{
+    appearance:none;border:none;cursor:pointer;font-family:inherit;
+    font-size:16px;font-weight:600;color:#fff;
+    background:var(--blue);
+    padding:15px 30px;border-radius:14px;
+    letter-spacing:.5px;
+    transition:transform .15s ease,background .2s ease,opacity .2s ease;
+    min-height:50px;
+  }
+  .btn:hover{background:#6B8DA2}
+  .btn:active{transform:scale(.975)}
+  .btn.ghost{
+    background:transparent;color:var(--ink);
+    border:1px solid var(--line);
+  }
+  .btn.ghost:hover{background:#FBFBF8}
+
+  /* ============ 首页 ============ */
+  #view-start{justify-content:center;align-items:center;text-align:center;gap:20px;padding-top:20px}
+  .mark{width:88px;height:88px;border-radius:50%;background:var(--blue-soft);
+    display:flex;align-items:center;justify-content:center;margin-bottom:4px}
+  .mark svg{width:44px;height:44px;stroke:var(--blue);fill:none;stroke-width:1.6;stroke-linecap:round}
+  .title{
+    font-family:"Noto Serif SC","Songti SC",serif;
+    font-size:30px;font-weight:700;line-height:1.42;letter-spacing:1px;
+  }
+  .title .sep{color:var(--pink);font-weight:500;margin:0 4px}
+  .lead{color:var(--muted);font-size:15px;max-width:340px}
+  .meta{display:flex;gap:16px;color:var(--muted);font-size:13px;flex-wrap:wrap;justify-content:center}
+  .meta i{display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--pink);vertical-align:middle;margin-right:6px}
+
+  /* ============ 答题页 ============ */
+  .head{margin-bottom:16px}
+  .head-row{display:flex;justify-content:space-between;align-items:baseline;font-size:13px;color:var(--muted);margin-bottom:9px}
+  .head-row b{color:var(--ink);font-weight:600}
+  .track{height:3px;background:var(--line);border-radius:99px;overflow:hidden}
+  .fill{height:100%;width:0;background:var(--blue);border-radius:99px;transition:width .32s ease}
+
+  .q-card{background:var(--paper);border-radius:20px;padding:26px 20px;border:1px solid var(--line);animation:fadeUp .3s ease}
+  .q-no{font-family:"Noto Serif SC",serif;font-size:12px;color:var(--pink);letter-spacing:2px;margin-bottom:8px}
+  .q-text{font-size:18px;font-weight:600;line-height:1.6;margin-bottom:20px;text-wrap:pretty}
+  .options{display:flex;flex-direction:column;gap:10px}
+  .option{
+    display:flex;align-items:flex-start;gap:11px;
+    width:100%;text-align:left;cursor:pointer;
+    background:#FBFBF8;border:1px solid var(--line);
+    border-radius:13px;padding:14px 15px;
+    font-family:inherit;font-size:15px;line-height:1.55;color:var(--ink);
+    transition:border-color .18s ease,background .18s ease,transform .15s ease;
+    min-height:48px;
+  }
+  .option:hover{border-color:var(--blue);background:#F7FAFB}
+  .option:active{transform:scale(.985)}
+  .option .tag{
+    flex:none;width:22px;height:22px;border-radius:50%;
+    background:var(--blue-soft);color:var(--blue);
+    display:flex;align-items:center;justify-content:center;
+    font-size:12px;font-weight:700;margin-top:1px;
+  }
+  .option.selected{border-color:var(--blue);background:var(--blue-soft)}
+  .option.selected .tag{background:var(--blue);color:#fff}
+  /* 答题切换期间禁用选项，避免移动端触摸穿透误选下一题 */
+  .options.locked .option{pointer-events:none}
+
+  .foot{margin-top:18px;display:flex;justify-content:space-between;align-items:center;gap:10px;min-height:50px}
+  .linkbtn{appearance:none;background:none;border:none;cursor:pointer;font-family:inherit;
+    font-size:14px;color:var(--muted);padding:10px 2px}
+  .linkbtn:hover{color:var(--ink)}
+
+  /* ============ 结果页 ============ */
+  #view-result{align-items:center;gap:14px}
+  .card{
+    width:100%;background:var(--paper);border:1px solid var(--line);
+    border-radius:22px;padding:28px 22px;animation:fadeUp .36s ease;
+  }
+  .top{text-align:center}
+  .kicker{font-size:12px;color:var(--muted);letter-spacing:3px;margin-bottom:6px}
+  .pct{
+    font-family:"Noto Serif SC",serif;font-weight:700;line-height:1.1;
+    font-size:clamp(56px,16vw,78px);color:var(--ink);
+    font-variant-numeric:tabular-nums;
+  }
+  .pct span{font-size:.42em;font-weight:500;color:var(--muted);margin-left:2px}
+  .level{display:inline-flex;align-items:center;gap:8px;margin-top:8px;
+    font-size:15px;font-weight:600;color:var(--blue);background:var(--blue-soft);
+    padding:6px 16px;border-radius:99px}
+  .level b{font-weight:700}
+  .level .dot{width:7px;height:7px;border-radius:50%;background:var(--blue)}
+
+  /* 刻度条：五段 + 指针 */
+  .scale{margin:20px 0 6px;position:relative;padding-top:2px}
+  .scale-bar{display:grid;grid-template-columns:repeat(5,1fr);gap:3px}
+  .seg{height:8px;border-radius:3px}
+  .seg.s1{background:#DCE7EA}
+  .seg.s2{background:#C9DCE3}
+  .seg.s3{background:#B3CDD8}
+  .seg.s4{background:#93B5C5}
+  .seg.s5{background:#7397AC}
+  .pointer{position:absolute;top:-8px;width:0;height:0;
+    border-left:5px solid transparent;border-right:5px solid transparent;
+    border-top:7px solid var(--ink);transform:translateX(-50%);
+    transition:left .5s cubic-bezier(.22,.9,.3,1)}
+  .scale-labels{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:7px}
+
+  .block{margin-top:22px}
+  .block-h{display:flex;align-items:center;gap:9px;font-size:14px;font-weight:600;margin-bottom:7px}
+  .block-h .ln{width:16px;height:2px;background:var(--pink);border-radius:2px}
+  .block p{font-size:14.5px;color:#5C666D;line-height:1.8;text-wrap:pretty}
+  .egg p{background:#FBFBF8;border:1px solid var(--line);border-radius:12px;padding:13px 15px}
+
+  .slogan{margin-top:22px;padding-top:18px;border-top:1px dashed var(--line);text-align:center}
+  .slogan p{font-family:"Noto Serif SC",serif;font-size:17px;font-weight:600;line-height:1.6;letter-spacing:.5px}
+  .slogan .quo{color:var(--pink);font-weight:500}
+
+  .dims{margin-top:22px;display:flex;flex-direction:column;gap:9px}
+  .dim-row{display:flex;align-items:center;gap:10px;font-size:12.5px;color:var(--muted)}
+  .dim-row .n{flex:none;width:76px}
+  .dim-track{flex:1;height:6px;background:#F1F2ED;border-radius:99px;overflow:hidden}
+  .dim-fill{height:100%;border-radius:99px;background:var(--blue);width:0;transition:width .5s ease}
+  .dim-row .v{flex:none;width:16px;text-align:right;color:var(--ink)}
+
+  .actions{width:100%;display:flex;flex-direction:column;gap:10px}
+
+  @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+  @media (prefers-reduced-motion:reduce){*{animation:none !important;transition:none !important}}
+
+  @media (max-width:420px){
+    .wrap{padding:22px 16px 44px}
+    .title{font-size:25px}
+    .q-text{font-size:17px}
+    .card{padding:24px 18px}
+    .dim-row .n{width:66px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ===== 视图：首页 ===== -->
+  <section id="view-start" class="view">
+    <div class="mark" aria-hidden="true">
+      <svg viewBox="0 0 24 24">
+        <path d="M5 12a7 7 0 007 7 7 7 0 007-7"/>
+        <path d="M5 12a7 7 0 017-7 7 7 0 017 7"/>
+        <path d="M9 15c1.6-1.4 3.4-1.4 5 0"/>
+      </svg>
+    </div>
+    <h1 class="title">测一测<span class="sep">｜</span>你的内耗程度</h1>
+    <p class="lead">30 道日常小题，测出你心里那台“后台程序”跑了多少。不用懂什么心理学，凭第一反应选就好。</p>
+    <div class="meta">
+      <span><i></i>共 30 题</span>
+      <span><i></i>约 3 分钟</span>
+      <span><i></i>结果带百分比</span>
+    </div>
+    <button class="btn" id="btn-start">开始测试</button>
+  </section>
+
+  <!-- ===== 视图：答题 ===== -->
+  <section id="view-quiz" class="view hidden">
+    <div class="head">
+      <div class="head-row">
+        <span>第 <b id="q-index">1</b> / 30 题</span>
+        <span id="q-percent">0%</span>
+      </div>
+      <div class="track"><div class="fill" id="fill"></div></div>
+    </div>
+
+    <div class="q-card">
+      <div class="q-no" id="q-no">QUESTION 01</div>
+      <p class="q-text" id="q-text"></p>
+      <div class="options" id="options"></div>
+    </div>
+
+    <div class="foot">
+      <button class="linkbtn" id="btn-back">← 上一题</button>
+      <button class="btn ghost hidden" id="btn-submit">看看我的内耗程度</button>
+    </div>
+  </section>
+
+  <!-- ===== 视图：结果 ===== -->
+  <section id="view-result" class="view hidden">
+    <div class="card" id="result-card"></div>
+    <div class="actions">
+      <button class="btn" id="btn-restart">重新测试</button>
+      <button class="btn ghost" id="btn-copy">复制我的结果</button>
+    </div>
+  </section>
+
+</div>
+
+<script>
+/* ============ 人格维度 ============ */
+/* X 心绪回放 · B 边界柔软 · Q 自我期待 · S 社交雷达 · R 松弛天赋 */
+var DIM_META = {
+  X:{name:"心绪回放", color:"#7FA0B4"},
+  B:{name:"边界柔软", color:"#D2A3AC"},
+  Q:{name:"自我期待", color:"#C7B79E"},
+  S:{name:"社交雷达", color:"#9CAD9C"},
+  R:{name:"松弛天赋", color:"#8FA9A0"}
+};
+
+/* ============ 题目：生活化场景，每题 4 个选项，内耗分 s=3/2/1/0 ============ */
+var QUESTIONS = [
+  { q:"关灯躺下的那一秒，脑子里先跳出什么？", o:[
+    {t:"白天说错的那句话，又放了一遍", d:"X", s:3},
+    {t:"明天有没有什么事漏掉了", d:"Q", s:2},
+    {t:"某个人的表情，我是不是没读懂", d:"S", s:1},
+    {t:"没什么，翻个身就睡了", d:"R", s:0}
+  ]},
+  { q:"群里发消息半天没人回，你会？", o:[
+    {t:"反复检查自己是不是说得不合适", d:"Q", s:3},
+    {t:"想是不是大家不太喜欢我", d:"S", s:2},
+    {t:"顺手补个表情，把气氛救一下", d:"B", s:1},
+    {t:"过一会儿就忘了这回事", d:"R", s:0}
+  ]},
+  { q:"朋友临时改约，你心里？", o:[
+    {t:"问一句原因，确认一下情况", d:"X", s:1},
+    {t:"嘴上说没事，心里其实有点堵", d:"B", s:2},
+    {t:"先反省是不是自己哪里做得不好", d:"Q", s:3},
+    {t:"正好空出时间，去做别的", d:"R", s:0}
+  ]},
+  { q:"洗完澡照镜子那几秒，你在想？", o:[
+    {t:"今天哪句话表现不够好", d:"Q", s:3},
+    {t:"明天还有一堆事没安排", d:"B", s:2},
+    {t:"今天谁看我的眼神有点怪", d:"S", s:1},
+    {t:"赶紧睡，明天再说", d:"R", s:0}
+  ]},
+  { q:"东西交上去，被回了一句“再改改”，你？", o:[
+    {t:"立刻开始猜对方到底不满意哪里", d:"X", s:3},
+    {t:"把能改的全改一遍，怕再被挑", d:"Q", s:2},
+    {t:"先问清楚要什么，再动手", d:"S", s:1},
+    {t:"改就改，改完就算了", d:"R", s:0}
+  ]},
+  { q:"点个外卖选了十几分钟，通常卡在？", o:[
+    {t:"怕选错，吃完又后悔", d:"Q", s:3},
+    {t:"在脑子里反复对比那几家", d:"X", s:2},
+    {t:"怕点到别人不爱吃的", d:"S", s:1},
+    {t:"随便点一家，都行", d:"R", s:0}
+  ]},
+  { q:"有人当面夸你，你第一反应是？", o:[
+    {t:"想这是不是一句客气话", d:"X", s:2},
+    {t:"觉得得再努力才对得起这句", d:"Q", s:3},
+    {t:"猜对方是不是有事找我", d:"S", s:1},
+    {t:"开心收下，说声谢谢", d:"R", s:0}
+  ]},
+  { q:"一件早该翻篇的事，你还会？", o:[
+    {t:"偶尔半夜想起，细节全回来", d:"X", s:3},
+    {t:"想想下次怎么做得更好", d:"Q", s:2},
+    {t:"留意别人还会不会提起", d:"S", s:1},
+    {t:"真的翻篇了，基本不回想", d:"R", s:0}
+  ]},
+  { q:"排队时有人插队，你？", o:[
+    {t:"心里演练了好几遍怎么开口", d:"X", s:2},
+    {t:"想说，又怕把气氛搞僵", d:"B", s:3},
+    {t:"看看周围人的反应再决定", d:"S", s:1},
+    {t:"平静提醒一句，然后继续等", d:"R", s:0}
+  ]},
+  { q:"发动态前的那一分钟，你？", o:[
+    {t:"反复改文案，怕被理解错", d:"X", s:3},
+    {t:"想发，又怕没人回应", d:"Q", s:2},
+    {t:"猜谁会看到、会怎么想", d:"S", s:1},
+    {t:"发完就放下，不太在意", d:"R", s:0}
+  ]},
+  { q:"听到一句“有空聊两句”，你？", o:[
+    {t:"立刻把最近的事在心里过一遍", d:"X", s:3},
+    {t:"担心是不是哪里没做好", d:"Q", s:2},
+    {t:"问问身边人是不是也收到了", d:"S", s:1},
+    {t:"聊了再说，先忙手上的", d:"R", s:0}
+  ]},
+  { q:"忙了一整天，晚上却觉得空，可能是？", o:[
+    {t:"做的事没得到一句肯定", d:"Q", s:3},
+    {t:"一直担心哪件事没兜住", d:"B", s:2},
+    {t:"脑子里还在放白天的画面", d:"X", s:1},
+    {t:"其实挺满足，忙完就好了", d:"R", s:0}
+  ]},
+  { q:"消息发出去迟迟没回，你会？", o:[
+    {t:"想是不是自己打扰到对方了", d:"B", s:3},
+    {t:"想是不是对方有点不高兴", d:"Q", s:2},
+    {t:"忍不住点开看几次有没有新消息", d:"X", s:1},
+    {t:"没回就没回，先做别的", d:"R", s:0}
+  ]},
+  { q:"一件和你无关的事被批评，你？", o:[
+    {t:"不自觉往自己身上联想", d:"X", s:3},
+    {t:"想赶紧说明清楚，怕被误会", d:"B", s:2},
+    {t:"观察一下其他人怎么反应", d:"S", s:1},
+    {t:"听听就算了，跟我没关系", d:"R", s:0}
+  ]},
+  { q:"要买一件挺贵的东西，你最纠结？", o:[
+    {t:"怕买错，翻来覆去查资料", d:"Q", s:3},
+    {t:"怕花了之后后悔", d:"X", s:2},
+    {t:"想问过别人意见才敢定", d:"S", s:1},
+    {t:"喜欢又用得上，就买了", d:"R", s:0}
+  ]},
+  { q:"和新朋友聊完回家，你？", o:[
+    {t:"回放自己说过的每句话", d:"X", s:3},
+    {t:"想自己有没有表现得不够好", d:"Q", s:2},
+    {t:"琢磨对方会不会喜欢我", d:"S", s:1},
+    {t:"聊得挺开心，结束就结束", d:"R", s:0}
+  ]},
+  { q:"一件小事出了错，你的第一反应？", o:[
+    {t:"先想这事会不会怪到我头上", d:"B", s:2},
+    {t:"先自责，怎么没早点发现", d:"Q", s:3},
+    {t:"先想别人会怎么看这件事", d:"S", s:1},
+    {t:"先解决，解决完再说", d:"R", s:0}
+  ]},
+  { q:"深夜刷到别人的生活，你？", o:[
+    {t:"对比一下自己差在哪", d:"Q", s:3},
+    {t:"想自己是不是走得太慢", d:"S", s:2},
+    {t:"多看几眼，羡慕一会儿", d:"X", s:1},
+    {t:"点个赞，然后睡觉", d:"R", s:0}
+  ]},
+  { q:"有人请你帮个忙，可你其实不方便，你？", o:[
+    {t:"先答应下来，之后再想办法", d:"B", s:3},
+    {t:"纠结怎么拒绝才不伤人", d:"Q", s:2},
+    {t:"先问问对方急不急", d:"S", s:1},
+    {t:"直接说不方便，下次可以", d:"R", s:0}
+  ]},
+  { q:"一场分享里有一句没听懂，你？", o:[
+    {t:"怕问出来显得自己笨", d:"Q", s:3},
+    {t:"反复琢磨那句话到底什么意思", d:"X", s:2},
+    {t:"看看旁边的人是不是也没懂", d:"S", s:1},
+    {t:"结束后直接去问清楚", d:"R", s:0}
+  ]},
+  { q:"睡前忽然想起几年前的一件事，你？", o:[
+    {t:"越想越清醒，细节全回来了", d:"X", s:3},
+    {t:"想当时要是做得更好就好了", d:"Q", s:2},
+    {t:"想那个人现在会怎么看我", d:"S", s:1},
+    {t:"想起就想起了，翻个身继续睡", d:"R", s:0}
+  ]},
+  { q:"计划被打乱，你最难受的是？", o:[
+    {t:"后面全都要重新安排", d:"B", s:2},
+    {t:"没按原计划来，像没做好", d:"Q", s:3},
+    {t:"别人会不会觉得我不靠谱", d:"S", s:1},
+    {t:"换个方案也挺好，走着看", d:"R", s:0}
+  ]},
+  { q:"收到一条语气很简短的消息，你？", o:[
+    {t:"反复读，猜对方是不是有情绪", d:"X", s:3},
+    {t:"想是不是自己哪里惹到了", d:"B", s:2},
+    {t:"问问共同的朋友什么情况", d:"S", s:1},
+    {t:"没多想，正常回一句就好", d:"R", s:0}
+  ]},
+  { q:"忙完一天，你最想的是？", o:[
+    {t:"有人能肯定我一句", d:"Q", s:3},
+    {t:"把所有事都收尾干净", d:"B", s:2},
+    {t:"找个人聊两句，把话说完", d:"X", s:1},
+    {t:"安静待着，谁也不见", d:"R", s:0}
+  ]},
+  { q:"说完一句可能不太合适的话，你会？", o:[
+    {t:"在心里反复放好几遍", d:"X", s:3},
+    {t:"想怎么补救，怕留下印象", d:"Q", s:2},
+    {t:"观察对方有没有变脸色", d:"S", s:1},
+    {t:"说完就过了，没太在意", d:"R", s:0}
+  ]},
+  { q:"面对一个还不确定的结果，你？", o:[
+    {t:"提前把所有坏情况想一遍", d:"X", s:3},
+    {t:"反复检查有没有疏漏", d:"B", s:2},
+    {t:"问问有经验的人怎么看", d:"S", s:1},
+    {t:"到时候再看，先不预支", d:"R", s:0}
+  ]},
+  { q:"很久没联系的人忽然找你，你？", o:[
+    {t:"先想是不是有事要我帮忙", d:"B", s:2},
+    {t:"想自己最近是不是太冷淡了", d:"Q", s:3},
+    {t:"好奇对方要说什么", d:"X", s:1},
+    {t:"直接问一句怎么了", d:"R", s:0}
+  ]},
+  { q:"一天里最放松的时刻是？", o:[
+    {t:"所有事做完、确认无误的那一刻", d:"B", s:3},
+    {t:"有人认真夸了我一句的那一刻", d:"Q", s:2},
+    {t:"和人聊得开心、被理解的那一刻", d:"S", s:1},
+    {t:"没有固定时刻，随时都还行", d:"R", s:0}
+  ]},
+  { q:"别人说你“人真好”，你心里？", o:[
+    {t:"有点累，好像得一直好下去", d:"B", s:3},
+    {t:"想自己其实没那么好", d:"Q", s:2},
+    {t:"猜对方是不是有事要求我", d:"S", s:1},
+    {t:"开心收下，谢谢夸奖", d:"R", s:0}
+  ]},
+  { q:"如果有个按钮能关掉脑内的循环回放，你？", o:[
+    {t:"马上按，太需要了", d:"X", s:3},
+    {t:"先按一半，留点警觉心", d:"B", s:2},
+    {t:"犹豫一下，怕少了反思", d:"Q", s:1},
+    {t:"不按，回放也是我的一部分", d:"R", s:0}
+  ]}
+];
+
+/* ============ 等级结果文案 ============ */
+var LEVELS = [
+  { max:18, key:"静水体质", tag:"心宽少耗型",
+    icon:"<svg viewBox='0 0 24 24'><path d='M3 15c3-4 6-4 9 0s6 4 9 0'/><path d='M3 20c3-4 6-4 9 0s6 4 9 0'/></svg>",
+    why:"你心里那台后台程序基本不太加班。事情过去了就真过去了，别人一句无心的话也很难在你这里停留超过一顿饭的工夫。不是迟钝，是你很清楚：能改的会改，改不了的想也没用。你的能量大多留在了当下，所以看起来总是比同龄人松弛一点。",
+    egg:"你的隐藏技能是“翻篇速度”。别人还在原地倒带，你已经走到下一集了。小彩蛋：你常常是那个被朋友说“你怎么一点都不急”的人，而你心里其实很急，只是急完了。",
+    slogan:"我的内耗，基本没开机。" },
+  { max:36, key:"微风体质", tag:"偶发内耗型",
+    icon:"<svg viewBox='0 0 24 24'><path d='M4 12h6c2 0 2-2 4-2s2 2 4 2'/><path d='M4 17h14'/></svg>",
+    why:"你大部分时候是稳的，只在少数场景会起风：某个人的语气、一件没交代清楚的事。你会想，但不会一直想；会复盘，但复完就放下了。这种程度的内耗其实很像身体的轻度酸痛，提醒你在乎，也提醒你该歇了。",
+    egg:"你的彩蛋是“选择性失眠”。平时睡得比谁都沉，偏偏遇到一件小事能醒到两点。小提醒：你已经有很好的自我修复力，别把偶尔的起风当成故障。",
+    slogan:"偶尔起风，但很快放晴。" },
+  { max:54, key:"涟漪体质", tag:"中度内耗型",
+    icon:"<svg viewBox='0 0 24 24'><path d='M3 13c3-5 6-5 9 0s6 5 9 0'/><path d='M8 19h8'/></svg>",
+    why:"你是那种“表面很稳、心里一直在开会”的人。一句评价、一个没回的消息，都会在心里荡开好几圈。你不是玻璃心，只是感知细、在意人，所以事到你这里会多过一道工序。你的谨慎让身边人很安心，只是这份安心往往用你自己的电量换的。",
+    egg:"你的彩蛋是“事后复盘王”。一件三分钟的事，你能在心里演三集，还给对方补了台词。小提醒：给自己设一个“想十分钟就停”的规矩，你会轻松很多。",
+    slogan:"心里有涟漪，人前仍是平的。" },
+  { max:72, key:"深流体质", tag:"偏高内耗型",
+    icon:"<svg viewBox='0 0 24 24'><path d='M3 9c3-4 6-4 9 0s6 4 9 0'/><path d='M3 14c3-4 6-4 9 0s6 4 9 0'/><path d='M3 19c3-4 6-4 9 0s6 4 9 0'/></svg>",
+    why:"你心里常年有一片深水，水面平静，底下一直在流。你习惯先替别人想一遍、再替自己想一遍，最后还要回头检查自己有没有做错。你很少把累说出口，因为在你看来，那些都“不算什么事”——可它们加起来，真的很占地方。",
+    egg:"你的彩蛋是“情绪考古学家”。别人只记得结局，你能精确到当时的光线、语气和第几个字。小提醒：你的细腻是一种天赋，别让它只用来审判自己。",
+    slogan:"水面越静，底下越深。" },
+  { max:100, key:"涌潮体质", tag:"高敏内耗型",
+    icon:"<svg viewBox='0 0 24 24'><path d='M3 8c3-4 6-4 9 0s6 4 9 0'/><path d='M3 13c3-4 6-4 9 0s6 4 9 0'/><path d='M3 18c3-4 6-4 9 0s6 4 9 0'/><path d='M19 6l2-2'/><path d='M20 10h2'/></svg>",
+    why:"你的感知几乎是全开的：别人的一个停顿、空气里的一点变化，你都能接收到。这让你特别会共情，也让你很难真正休息。你不是想太多，你是接收得太多——同样一件事，别人只收到一层，你会收到三层，还自动加了注释。",
+    egg:"你的彩蛋是“人形情绪雷达”。你经常比当事人更早发现气氛不对，也常常是那个悄悄把场面圆回来的人。小提醒：你的敏感是稀缺的礼物，请先留一份给自己。",
+    slogan:"感知全开，也请记得给自己关机。" }
+];
+
+/* ============ 状态 ============ */
+var current = 0;
+var locked = false;
+var answers = new Array(QUESTIONS.length);
+for (var i = 0; i < answers.length; i++) answers[i] = null;
+
+function $(id){ return document.getElementById(id); }
+var views = { start:$("view-start"), quiz:$("view-quiz"), result:$("view-result") };
+
+function showView(name){
+  for (var k in views){ views[k].classList.add("hidden"); }
+  views[name].classList.remove("hidden");
+  window.scrollTo(0, 0);
+}
+
+/* ============ 答题渲染 ============ */
+function renderQuestion(){
+  var q = QUESTIONS[current];
+  $("q-index").textContent = current + 1;
+  $("q-no").textContent = "QUESTION " + (current + 1 < 10 ? "0" : "") + (current + 1);
+  var done = 0;
+  for (var a = 0; a < answers.length; a++){ if (answers[a] !== null) done++; }
+  var pct = Math.round(done / QUESTIONS.length * 100);
+  $("q-percent").textContent = pct + "%";
+  $("fill").style.width = pct + "%";
+  $("q-text").textContent = q.q;
+
+  var box = $("options");
+  box.innerHTML = "";
+  q.o.forEach(function(opt, idx){
+    var btn = document.createElement("button");
+    btn.className = "option" + (answers[current] === idx ? " selected" : "");
+    btn.innerHTML = '<span class="tag">' + "ABCD".charAt(idx) + '</span><span>' + opt.t + '</span>';
+    /* 手机端：用 pointerdown 触发并拦截后续合成 click，防止触摸穿透到下一题 */
+    btn.addEventListener("pointerdown", function(e){
+      if (e.pointerType === "mouse" && e.button !== 0) return;
+      e.preventDefault();
+      choose(idx, btn);
+    });
+    box.appendChild(btn);
+  });
+
+  var isLast = current === QUESTIONS.length - 1;
+  $("btn-submit").classList.toggle("hidden", !(isLast && answers[current] !== null));
+  $("btn-back").style.visibility = current === 0 ? "hidden" : "visible";
+}
+
+function choose(idx, btn){
+  if (locked) return;
+  locked = true;
+  answers[current] = idx;
+
+  var opts = document.querySelectorAll(".option");
+  for (var i = 0; i < opts.length; i++) opts[i].classList.remove("selected");
+  btn.classList.add("selected");
+  $("options").classList.add("locked");
+
+  function unlock(){
+    locked = false;
+    $("options").classList.remove("locked");
+  }
+
+  if (current === QUESTIONS.length - 1){
+    $("btn-submit").classList.remove("hidden");
+    $("fill").style.width = "100%";
+    $("q-percent").textContent = "100%";
+    setTimeout(unlock, 320);   /* 末题允许稍后改选 */
+    return;
+  }
+  /* 短暂反馈后进入下一题，渲染完成再解锁 */
+  setTimeout(function(){
+    current++;
+    renderQuestion();
+    unlock();
+  }, 280);
+}
+
+$("btn-back").addEventListener("click", function(){
+  if (locked) return;
+  if (current > 0){ current--; renderQuestion(); }
+});
+
+$("btn-submit").addEventListener("click", function(){
+  for (var i = 0; i < answers.length; i++){
+    if (answers[i] === null){ current = i; renderQuestion(); return; }
+  }
+  showResult();
+});
+
+/* ============ 计分 ============ */
+var MAX_SCORE = QUESTIONS.length * 3;   /* 每题最高 3 分，满分 90 */
+
+function calc(){
+  var dims = { X:0, B:0, Q:0, S:0, R:0 };
+  var total = 0;
+  for (var i = 0; i < answers.length; i++){
+    var opt = QUESTIONS[i].o[answers[i]];
+    dims[opt.d]++;
+    total += opt.s;
+  }
+  var pct = Math.round(total / MAX_SCORE * 100);
+  if (pct < 0) pct = 0;
+  if (pct > 100) pct = 100;
+  return { dims:dims, total:total, pct:pct };
+}
+
+function pickLevel(pct){
+  for (var i = 0; i < LEVELS.length; i++){ if (pct <= LEVELS[i].max) return LEVELS[i]; }
+  return LEVELS[LEVELS.length - 1];
+}
+
+/* ============ 结果渲染 ============ */
+function showResult(){
+  var r = calc();
+  var lv = pickLevel(r.pct);
+
+  var dimBars = "";
+  for (var k in DIM_META){
+    var w = Math.round(r.dims[k] / QUESTIONS.length * 100);
+    dimBars += '<div class="dim-row">' +
+      '<span class="n">' + DIM_META[k].name + '</span>' +
+      '<div class="dim-track"><div class="dim-fill" style="background:' + DIM_META[k].color + ';width:' + w + '%"></div></div>' +
+      '<span class="v">' + r.dims[k] + '</span>' +
+    '</div>';
+  }
+
+  $("result-card").innerHTML =
+    '<div class="top">' +
+      '<div class="kicker">你的内耗程度</div>' +
+      '<div class="pct">' + r.pct + '<span>%</span></div>' +
+      '<div class="level"><i class="dot"></i><b>' + lv.key + '</b><span>' + lv.tag + '</span></div>' +
+    '</div>' +
+    '<div class="scale">' +
+      '<div class="pointer" id="pointer" style="left:0%"></div>' +
+      '<div class="scale-bar">' +
+        '<div class="seg s1"></div><div class="seg s2"></div><div class="seg s3"></div>' +
+        '<div class="seg s4"></div><div class="seg s5"></div>' +
+      '</div>' +
+      '<div class="scale-labels"><span>静水</span><span>微风</span><span>涟漪</span><span>深流</span><span>涌潮</span></div>' +
+    '</div>' +
+    '<div class="block"><div class="block-h"><i class="ln"></i>为什么是这个数</div><p>' + lv.why + '</p></div>' +
+    '<div class="block egg"><div class="block-h"><i class="ln"></i>你的隐藏彩蛋</div><p>' + lv.egg + '</p></div>' +
+    '<div class="slogan"><p><span class="quo">「</span>' + lv.slogan + '<span class="quo">」</span></p></div>' +
+    '<div class="dims">' + dimBars + '</div>';
+
+  showView("result");
+
+  /* 指针与刻度对齐：留出两端 2% 的视觉余量 */
+  setTimeout(function(){
+    var p = $("pointer");
+    if (p) p.style.left = (2 + r.pct * 0.96) + "%";
+  }, 60);
+
+  $("btn-copy").dataset.text =
+    "我的内耗程度是 " + r.pct + "%｜" + lv.key + " · " + lv.tag + "。" + lv.slogan + " 你也来测测？";
+}
+
+/* ============ 操作入口 ============ */
+function resetAll(){
+  current = 0;
+  locked = false;
+  for (var i = 0; i < answers.length; i++) answers[i] = null;
+  $("options").classList.remove("locked");
+  $("btn-submit").classList.add("hidden");
+  $("fill").style.width = "0%";
+  $("q-percent").textContent = "0%";
+}
+
+$("btn-start").addEventListener("click", function(){
+  resetAll();
+  renderQuestion();
+  showView("quiz");
+});
+
+$("btn-restart").addEventListener("click", function(){
+  resetAll();
+  showView("start");
+});
+
+$("btn-copy").addEventListener("click", function(e){
+  var btn = e.currentTarget;
+  var text = btn.dataset.text;
+  var restore = function(){ btn.textContent = "复制我的结果"; };
+  if (navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(function(){
+      btn.textContent = "已复制，去分享吧";
+      setTimeout(restore, 1800);
+    }, function(){
+      btn.textContent = "长按文字即可复制";
+      setTimeout(restore, 1800);
+    });
+  } else {
+    btn.textContent = "长按文字即可复制";
+    setTimeout(restore, 1800);
+  }
+});
+</script>
+</body>
+</html>
